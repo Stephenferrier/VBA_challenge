@@ -1,0 +1,109 @@
+Sub Stocks()
+    ' Declare variables
+    Dim ws As Worksheet
+    Dim i As Long
+    Dim cell_vol As LongLong
+    Dim vol_total As LongLong
+    Dim ticker As String
+    Dim k As Long
+    Dim ticker_close As Double
+    Dim ticker_open As Double
+    Dim price_change As Double
+    Dim percent_change As Double
+    Dim maxIncrease As Double
+    Dim maxDecrease As Double
+    Dim maxVolume As Double
+    Dim stockWithMaxIncrease As String
+    Dim stockWithMaxDecrease As String
+    Dim stockWithMaxVolume As String
+    Dim currentStock As String
+    Dim currentVolume As Double
+    Dim currentOpen As Double
+    Dim currentClose As Double
+    Dim currentChange As Double
+
+    ' Loop through all worksheets
+    For Each ws In ThisWorkbook.Worksheets
+        Dim lastRow As Long
+        lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+
+        vol_total = 0
+        k = 2
+
+        ' Write Leaderboard Columns/Cells
+        ws.Range("I1").Value = "Ticker"
+        ws.Range("J1").Value = "Quarterly Change"
+        ws.Range("K1").Value = "Percent Change"
+        ws.Range("L1").Value = "Total Stock Volume"
+        ws.Range("P1").Value = "Ticker"
+        ws.Range("Q1").Value = "Value"
+        ws.Cells(2, 15).Value = "Greatest % Increase"
+        ws.Cells(3, 15).Value = "Greatest % Decrease"
+        ws.Cells(4, 15).Value = "Greatest Total Volume"
+
+        ' Initialize variables for greatest values
+        maxIncrease = 0
+        maxDecrease = 0
+        maxVolume = 0
+        stockWithMaxIncrease = ""
+        stockWithMaxDecrease = ""
+        stockWithMaxVolume = ""
+
+        ' Loop through the data to calculate needed items
+        For i = 2 To lastRow
+            cell_vol = ws.Cells(i, 7).Value
+            ticker = ws.Cells(i, 1).Value
+
+            If ws.Cells(i + 1, 1).Value <> ticker Then
+                vol_total = vol_total + cell_vol
+
+                ' Closing price
+                ticker_close = ws.Cells(i, 6).Value
+                price_change = ticker_close - ticker_open
+
+                ' Avoid any Div 0 issues
+                If ticker_open <> 0 Then
+                    percent_change = price_change / ticker_open
+                Else
+                    percent_change = 0
+                End If
+
+                ' Check for greatest % increase
+                If percent_change > maxIncrease Then
+                    maxIncrease = percent_change
+                    stockWithMaxIncrease = ticker
+                End If
+
+                ' Check for greatest % decrease
+                If percent_change < maxDecrease Then
+                    maxDecrease = percent_change
+                    stockWithMaxDecrease = ticker
+                End If
+
+                ' Check for greatest total volume
+                If vol_total > maxVolume Then
+                    maxVolume = vol_total
+                    stockWithMaxVolume = ticker
+                End If
+
+                ' Update
+                ticker_open = ws.Cells(i + 1, 3).Value
+                vol_total = 0 ' Reset total volume
+            Else
+                vol_total = vol_total + cell_vol
+            End If
+        Next i
+
+        ' Print Result with Xpert Help. (- symbol issues)
+        ws.Cells(2, 16).Value = stockWithMaxIncrease
+        ws.Cells(2, 17).Value = Format(maxIncrease * 100, "0.00") & "%"
+        ws.Cells(3, 16).Value = stockWithMaxDecrease
+        ws.Cells(3, 17).Value = Format(maxDecrease * 100, "0.00") & "%"
+        ws.Cells(4, 16).Value = stockWithMaxVolume
+        ws.Cells(4, 17).Value = maxVolume
+
+        ' Fit and Fill columns (Taken from class)
+        ws.Columns("K:K").NumberFormat = "0.00%"
+        ws.Columns("I:Q").AutoFit
+    Next ws
+End Sub
